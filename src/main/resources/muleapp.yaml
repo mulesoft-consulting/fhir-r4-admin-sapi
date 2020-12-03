@@ -1,0 +1,4 @@
+fhir:
+  intake-endpoint: "http://fhir-intake-exp-api"
+api:
+  id: "16320474"

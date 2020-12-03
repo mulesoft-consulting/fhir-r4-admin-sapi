@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
+    <http:listener-config name="fhir-server-admin-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="fhir-server-admin-config" api="resource::17473fef-b0b5-40f2-b1a0-72bee4bed13c:fhir-server-admin:2.0.0:raml:zip:fhir-server-admin.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="fhir-server-admin-main">
+        <http:listener config-ref="fhir-server-admin-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="fhir-server-admin-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND, APP:NOT_FOUND" enableNotifications="true" logException="true">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="fhir-server-admin-console">
+        <http:listener config-ref="fhir-server-admin-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="fhir-server-admin-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="update-intake-mappings" doc:id="b1ed525a-ff1d-4a2a-adea-5a16cefaffb1">
+        <logger level="INFO" doc:name="Logger" doc:id="7ba0459b-4874-46ad-a6c3-ed4c116b983e" message="Updating FHIR intake mappings..." />
+        <http:request method="GET" doc:name="Request" doc:id="3c57d08a-d5fa-4fb4-bb56-55e70581c318" url="#[%dw 2.0 output text/plain --- p('fhir.eapi') ++ '/updatemap']" />
+    </flow>
+    <flow name="put:\resources\(id):application\json:fhir-server-admin-config">
+        <ee:transform doc:name="vars.id">
+            <ee:variables>
+                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+		<mongo:find-one-document collectionName="${mongodb.collection}" doc:name="validate route exists" doc:id="8df71d23-4879-4c59-bba1-62636c264d20" config-ref="MongoDB_Config" target="findOneDocument">
+			<error-mapping targetType="APP:NOT_FOUND" />
+			<mongo:find-query ><![CDATA[#[output application/json
+---
+{
+	'_id': {
+		'\$oid': vars.id
+	}
+}]]]></mongo:find-query>
+		</mongo:find-one-document>
+        <mongo:update-documents collectionName="${mongodb.collection}" doc:name="Update documents" doc:id="f017bc29-01eb-4020-a693-bf8d4cf27ee8" config-ref="MongoDB_Config">
+			<mongo:find-query ><![CDATA[#[output application/json
+---
+{
+	'_id': {
+		'\$oid': vars.id
+	}
+}]]]></mongo:find-query>
+			<mongo:content-to-update ><![CDATA[#[payload - "id"]]]></mongo:content-to-update>
+		</mongo:update-documents>
+		<async doc:name="Async" doc:id="5448ba11-b2cc-49d1-8beb-684ca9bfa522" >
+			<flow-ref doc:name="update-intake-mappings" doc:id="10de48e6-5f3c-4531-8603-6dfc81b1f5cc" name="update-intake-mappings" />
+		</async>
+		<ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "Successfully update resource endpoint",
+  statusCode: 200
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="delete:\resources\(id):fhir-server-admin-config">
+        <ee:transform doc:name="vars.id">
+            <ee:variables>
+                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <mongo:find-one-document collectionName="${mongodb.collection}" doc:name="validate route exists" doc:id="aaa354e8-a74f-4502-b489-7800d6493585" config-ref="MongoDB_Config" target="findOneDocument">
+			<error-mapping targetType="APP:NOT_FOUND" />
+			<mongo:find-query><![CDATA[#[output application/json
+---
+{
+	'_id': {
+		'\$oid': vars.id
+	}
+}]]]></mongo:find-query>
+		</mongo:find-one-document>
+		<mongo:remove-documents doc:name="Remove documents" doc:id="2947ffe4-7630-4d16-84d0-aada8bb6ebe2" config-ref="MongoDB_Config" collectionName="${mongodb.collection}">
+			<mongo:find-query ><![CDATA[#[output application/json
+---
+{
+	'_id': {
+		'\$oid': vars.id
+	}
+}]]]></mongo:find-query>
+		</mongo:remove-documents>
+		<async doc:name="Async" doc:id="328ef739-e799-44cf-9e6e-4dccba6c91a6">
+			<flow-ref doc:name="update-intake-mappings" doc:id="ca3cdc00-ae7d-48c7-bdfe-852e6859aa68" name="update-intake-mappings" />
+		</async>
+		<ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "Successfully deleted endpoint",
+  statusCode: 200
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\resources:fhir-server-admin-config">
+        <mongo:find-documents collectionName="${mongodb.collection}" doc:name="Find documents" doc:id="c4cd6baf-f1dd-4b51-bc6e-f9b18e458bc1" config-ref="MongoDB_Config">
+			<mongo:condition-query ><![CDATA[#[output application/json
+---
+{}]]]></mongo:condition-query>
+		</mongo:find-documents>
+		<ee:transform doc:name="Transform Message" doc:id="d2decfed-4475-493e-a802-701860205742" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	hostname: payload01.hostname default "",
+	protocol: payload01.protocol default "",
+	resource: payload01.resourceName default "",
+	port: payload01.port as Number default 0,
+	basepath: payload01.basepath default "",
+	id: payload01.'_id'
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+    <flow name="get:\resources\(id):fhir-server-admin-config">
+        <ee:transform doc:name="vars.id">
+            <ee:variables>
+                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <mongo:find-one-document collectionName="${mongodb.collection}" doc:name="Find one document" doc:id="dbbfff6e-a933-4180-8330-5dbba1751ed1" config-ref="MongoDB_Config">
+			<error-mapping targetType="APP:NOT_FOUND" />
+			<mongo:find-query ><![CDATA[#[output application/json
+---
+{
+	'_id': {
+		'\$oid': vars.id
+	}
+}]]]></mongo:find-query>
+		</mongo:find-one-document>
+		<ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	hostname: (payload.hostname default ""),
+	protocol: payload.protocol default "",
+	resource: payload.resourceName default "",
+	port: payload.port as Number default 0,
+	basepath: payload.basepath default "",
+	id: payload.'_id'.'\$oid'
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\resources:application\json:fhir-server-admin-config">
+        <mongo:insert-document collectionName="${mongodb.collection}" doc:name="Insert document" doc:id="b79c15c0-30bb-4bb3-80a5-c6cebce28ffe" config-ref="MongoDB_Config">
+			<mongo:document ><![CDATA[#[output application/json --- payload]]]></mongo:document>
+		</mongo:insert-document>
+		<async doc:name="Async" doc:id="779b375f-df10-470d-91a7-30a57ebda52a">
+			<flow-ref doc:name="update-intake-mappings" doc:id="45fe2f5c-5251-44ab-883a-736749dd42ca" name="update-intake-mappings" />
+		</async>
+		<ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: payload,
+  statusCode: 201
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+</mule>

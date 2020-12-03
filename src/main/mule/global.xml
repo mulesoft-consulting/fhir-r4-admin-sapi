@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd">
+	<global-property doc:name="Global Property" doc:id="780786a0-0fac-409b-b314-b13cdb13756b" name="env" value="dev" />
+	<configuration-properties doc:name="Configuration properties" doc:id="7752e99e-aa4b-49f4-845a-5b5d0ac8935e" file="config.${env}.yaml" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="02d3c853-5032-40ca-9820-45f76da38b3a" file="config.secure.${env}.yaml" key="${securePropertiesKey}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<api-gateway:autodiscovery apiId="${anypoint.autodiscovery}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="f79c4459-5628-4633-abb5-40061717869a" flowRef="fhir-server-admin-main" />
+	<mongo:config name="MongoDB_Config" doc:name="MongoDB Config" doc:id="6b406e53-9601-446d-9853-71a3f8733e68" >
+		<mongo:connection-string-connection connectionString="mongodb+srv://${secure::mongodb.username}:${secure::mongodb.password}@fhir-hkjgt.mongodb.net/${mongodb.database}?retryWrites=true&amp;w=majority" />
+	</mongo:config>
+</mule>
