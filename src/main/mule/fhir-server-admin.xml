@@ -128,7 +128,21 @@ output application/json
         <http:request method="GET" doc:name="Request" doc:id="3c57d08a-d5fa-4fb4-bb56-55e70581c318" url="#[%dw 2.0 output text/plain --- p('fhir.eapi') ++ '/updatemap']" />
     </flow>
     <flow name="put:\resources\(id):application\json:fhir-server-admin-config">
-        <ee:transform doc:name="vars.id">
+        <ee:transform doc:name="Transform Message" doc:id="afe4f7e7-6592-4e73-9ef8-625cdde2dd9d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	hostname: payload.hostname,
+	protocol: payload.protocol,
+	resourceName: payload.resource,
+	port: payload.port,
+	basepath: payload.basepath
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="vars.id">
             <ee:variables>
                 <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
             </ee:variables>
@@ -263,7 +277,21 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="post:\resources:application\json:fhir-server-admin-config">
-        <mongo:insert-document collectionName="${mongodb.collection}" doc:name="Insert document" doc:id="b79c15c0-30bb-4bb3-80a5-c6cebce28ffe" config-ref="MongoDB_Config">
+        <ee:transform doc:name="Transform Message" doc:id="6321b6bc-8139-420e-85a1-90fd91b52bca" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	hostname: payload.hostname,
+	protocol: payload.protocol,
+	resourceName: payload.resource,
+	port: payload.port,
+	basepath: payload.basepath
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<mongo:insert-document collectionName="${mongodb.collection}" doc:name="Insert document" doc:id="b79c15c0-30bb-4bb3-80a5-c6cebce28ffe" config-ref="MongoDB_Config">
 			<mongo:document ><![CDATA[#[output application/json --- payload]]]></mongo:document>
 		</mongo:insert-document>
 		<async doc:name="Async" doc:id="779b375f-df10-470d-91a7-30a57ebda52a">
