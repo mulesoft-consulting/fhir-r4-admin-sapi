@@ -2,6 +2,6 @@ mongodb:
   database: "fhir-admin"
   collection: "fhir-routes-dev"
 anypoint:
-  autodiscovery: "16457607"
+  autodiscovery: "16507968"
 fhir:
   eapi: "http://dev-1hls-fhir-r4-v1.us-e2.cloudhub.io"
