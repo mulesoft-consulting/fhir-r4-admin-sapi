@@ -21,21 +21,9 @@ pipeline {
             submoduleCfg: [], 
             userRemoteConfigs: [[url: 'https://github.com/mulesoft-fhir/fhir-parent-pom']]
         ])
-        checkout([  
-            $class: 'GitSCM', 
-            branches: [[name: 'refs/heads/master']], 
-            doGenerateSubmoduleConfigurations: false, 
-            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'fhir-resource-crud-operations']], 
-            submoduleCfg: [], 
-            userRemoteConfigs: [[url: 'https://github.com/mulesoft-fhir/fhir-resource-crud-operations']]
-        ])
         withMaven(
           mavenSettingsConfig: 'certified-mvn-settings.xml'){
             sh 'cd fhir-parent-pom && mvn install'
-          }
-        withMaven(
-          mavenSettingsConfig: 'certified-mvn-settings.xml'){
-            sh 'cd fhir-resource-crud-operations && mvn install'
           }
        }
     }
