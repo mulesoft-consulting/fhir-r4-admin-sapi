@@ -19,7 +19,7 @@ pipeline {
             doGenerateSubmoduleConfigurations: false, 
             extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'fhir-parent-pom']], 
             submoduleCfg: [], 
-            userRemoteConfigs: [[url: 'https://github.com/mulesoft-fhir/fhir-parent-pom']]
+            userRemoteConfigs: [[url: 'https://github.com/mulesoft-consulting/fhir-parent-pom']]
         ])
         withMaven(
           mavenSettingsConfig: 'certified-mvn-settings.xml'){
